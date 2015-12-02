@@ -9,6 +9,7 @@ using namespace std;
 
 #define NUM_CARS 40//this is the number of cars given for the simulation each with a random direction
 #define SIMULATIONTIME 60 //this represents the amount of time given to the program(in seconds) to run the simulation
+#define NUM_THREADS 3
 
 //This will be our universal queue for the intersection
 queue <int> Intersection;
@@ -58,6 +59,11 @@ int main()
 {
     Initialize_Mutex();
 
+    for(int i = 0; i <= NUM_THREADS; i++)
+    {
+
+    }
+
 }
 
 /*This function is essentially the meat of the simulation.
@@ -101,25 +107,106 @@ void *STARTSIMULATION(void *arg)
                     break; //this means that it IS the front of the queue so we break out the loop and continure
             }
 
-            //
+            pthread_mutex_unlock(&Main_Intersection);
+
+
             pthread_mutex_lock(&Main_Intersection);
             cout << "Car " << id << " going north enters the intersection" << endl;
+            cout << "Car " << id << " going north leaves the intersection" << endl;
             pthread_mutex_unlock(&Main_Intersection);
 
             pthread_mutex_lock(&Main_Intersection);
             Intersection.pop();
-            cout << "Car " << id << " going north leaves the intersection" << endl;
             pthread_mutex_unlock(&Main_Intersection);
         }
 
-        else if(id % 4 + 2)
+        //This handles the cars in the south direction
+        else if(id % 4 + 2 == 0)
         {
+            pthread_mutex_lock(&Main_Intersection);
+            Intersection.push(id);
+            pthread_mutex_unlock(&Main_Intersection);
 
+            while(true)
+            {
+                pthread_mutex_lock(&Main_Intersection);
+                if(id != Intersection.front())
+                {
+                    pthread_mutex_unlock(&Main_Intersection);
+                    usleep(1);
+                    continue;
+                }
 
+                break;
+            }
+
+            pthread_mutex_unlock(&Main_Intersection);
+            cout << "Car " << id << " going south enters the intersection" << endl;
+            cout << "Car " << id << " going south leaves the intersection" << endl;
+            pthread_mutex_lock(&Main_Intersection);
+
+            pthread_mutex_unlock(&Main_Intersection);
+            Intersection.pop();
+            pthread_mutex_lock(&Main_Intersection);
         }
 
+        //this will handle cars in the east direction
+        else if(id % 4 + 3 == 0)
+        {
+            pthread_mutex_lock(&Main_Intersection);
+            Intersection.push(id);
+            pthread_mutex_unlock(&Main_Intersection);
 
+            while(true)
+            {
+                pthread_mutex_lock(&Main_Intersection);
+                if(id != Intersection.front())
+                {
+                    pthread_mutex_unlock(&Main_Intersection);
+                    usleep(1);
+                    continue;
+                }
 
+                break;
+            }
 
+            pthread_mutex_unlock(&Main_Intersection);
+            cout << "Car " << id << " going east enters the intersection" << endl;
+            cout << "Car " << id << " going east leaves the intersection" << endl;
+            pthread_mutex_lock(&Main_Intersection);
+
+            pthread_mutex_unlock(&Main_Intersection);
+            Intersection.pop();
+            pthread_mutex_lock(&Main_Intersection);
+        }
+
+        else if (id % 4 + 4 == 0)
+        {
+            pthread_mutex_lock(&Main_Intersection);
+            Intersection.push(id);
+            pthread_mutex_unlock(&Main_Intersection);
+
+            while(true)
+            {
+                pthread_mutex_lock(&Main_Intersection);
+                if(id != Intersection.front())
+                {
+                    pthread_mutex_unlock(&Main_Intersection);
+                    usleep(1);
+                    continue;
+                }
+
+                break;
+            }
+
+            pthread_mutex_unlock(&Main_Intersection);
+            cout << "Car " << id << " going west enters the intersection" << endl;
+            cout << "Car " << id << " going west leaves the intersection" << endl;
+            pthread_mutex_lock(&Main_Intersection);
+
+            pthread_mutex_unlock(&Main_Intersection);
+            Intersection.pop();
+            pthread_mutex_lock(&Main_Intersection);
+        }
     }
 }
