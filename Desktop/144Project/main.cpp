@@ -7,8 +7,7 @@
 using namespace std;
 
 #define NUM_CARS 40//this is the number of cars given for the simulation each with a random direction
-#define SIMULATIONTIME 60 //this represents the amount of time given to the program(in seconds) to run the simulation
-#define NUM_THREADS 3
+#define SIMULATIONTIME 10 //this represents the amount of time given to the program(in seconds) to run the simulation
 
 //This will be our universal queue for the intersection
 queue <int> Intersection;
@@ -56,12 +55,17 @@ void Initialize_Mutex()
 
 int main()
 {
+
     Initialize_Mutex();
 
-    for(int i = 0; i <= NUM_THREADS; i++)
+    for(int i = 0; i <= NUM_CARS; i++)
     {
-
+        pthread_create(&THREAD, &THREADATTR, STARTSIMULATION, NULL);
     }
+
+    sleep(SIMULATIONTIME);
+    cout << "Done with simulation\n";
+    return 0;
 
 }
 
