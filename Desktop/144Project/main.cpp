@@ -61,8 +61,69 @@ void *IntersectionStatus(void *arg);
 
 int main()
 {
+    srand(0);
+    pthread_t p_ProcessTraffic, p_ProcessDirection0, p_ProcessDirection1, p_ProcessDirection2, p_ProcessDirection3, p_IntersectionStatus;
+
+    pthread_mutex_init(&Traffic_Lock, NULL);
+    pthread_mutex_init(&Light_Lock, NULL);
+
+    pthread_create(&p_ProcessTraffic, NULL, ProcessTraffic, (void*)0);
+    pthread_create(&p_ProcessDirection0, NULL, ProcessDirections, (void*)0);
+    pthread_create(&p_ProcessDirection1, NULL, ProcessDirections, (void*)1);
+    pthread_create(&p_ProcessDirection2, NULL, ProcessDirections, (void*)2);
+    pthread_create(&p_ProcessDirection3, NULL, ProcessDirections, (void*)3);
+    pthread_create(&p_IntersectionStatus, NULL, IntersectionStatus, (void*)2);
+
+    pthread_join(p_ProcessTraffic, NULL);
+    pthread_join(p_ProcessDirection0, NULL);
+    pthread_join(p_ProcessDirection1, NULL);
+    pthread_join(p_ProcessDirection2, NULL);
+    pthread_join(p_ProcessDirection3, NULL);
+    pthread_join(p_IntersectionStatus, NULL);
 
 
+    return 0;
+}
+
+void *IntersectionStatus(void *arg)
+{
+    cout << "Total number of cars being processed " << TOTAL_CARS << endl;
+    cout << "Minimum distance for car to pass intersection " << MIN_DISTANCE_TO_PASS << endl;
+    cout << "Constant speed of cars being simulated " << SPEED_OF_CAR << endl;
+    cout << "Status of simulation" << endl;
+
+    while(runsim)
+    {
+        pthread_mutex_lock(&Traffic_Lock);
+        pthread_mutex_lock(&Light_Lock);
+
+        if(!Traffic_Intersection_Waiting.empty())
+        {
+            cout << Traffic_Intersection_Waiting.size() << " cars on the way to intersection" << endl;
+            for(int i = 0; i < Traffic_Intersection_Waiting.size(); i++)
+            {
+                cout << "Car " << i << " " << Traffic_Intersection_Waiting[i].distance << " units away from intersection in direction " << Traffic_Intersection_Waiting[i].direction << endl;
+
+            }
+            cout << endl;
+        }
+        else
+        {
+            cout << "No Traffic waiting to be processed" << endl;
+        }
+
+        if(!Traffic_Intersection_FOQ.empty())
+        {
+            cout << Traffic_Intersection_FOQ.size() << " cars stopped at intersection waiting to be processed." << endl;
+        }
+
+        cout << "Total number of cars processed " << TotalProcessedTraffic << endl;
+        cout << endl << endl;
+
+        sleep(1);
+        pthread_mutex_unlock(&Light_Lock);
+        pthread_mutex_unlock(&Traffic_Lock);
+    }
 }
 
 void *ProcessTraffic(void *arg)
