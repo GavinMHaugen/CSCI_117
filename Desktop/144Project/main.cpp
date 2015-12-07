@@ -63,7 +63,7 @@ int main()
         pthread_create(&THREAD, &THREADATTR, STARTSIMULATION, NULL);
     }
 
-    sleep(SIMULATIONTIME);
+    //sleep(SIMULATIONTIME);
     cout << "Done with simulation\n";
     return 0;
 
@@ -77,9 +77,8 @@ The car will then be pushed into the main Intersection queue  */
 void *STARTSIMULATION(void *arg)
 {
     int id;
+    int RandValue = rand() % 4 + 1;
 
-    while(CarIDNumber != NUM_CARS)
-    {
         //The id will stand for the car in this simulation so we must increment the CarIDNumber value everytime a thread uses this function
         //in order to make sure we process the intended amount of cars.
         pthread_mutex_lock(&CarID);
@@ -87,7 +86,7 @@ void *STARTSIMULATION(void *arg)
         pthread_mutex_unlock(&CarID);
 
         //this will handle the cars in the north direction
-        if(id % 4 + 1 == 0)
+        if(RandValue == 0)
         {
             //Pushing the car into the intersection queue
             pthread_mutex_lock(&Main_Intersection);
@@ -110,8 +109,6 @@ void *STARTSIMULATION(void *arg)
                     break; //this means that it IS the front of the queue so we break out the loop and continure
             }
 
-            pthread_mutex_unlock(&Main_Intersection);
-
 
             pthread_mutex_lock(&Main_Intersection);
             cout << "Car " << id << " going north enters the intersection" << endl;
@@ -124,7 +121,7 @@ void *STARTSIMULATION(void *arg)
         }
 
         //This handles the cars in the south direction
-        else if(id % 4 + 2 == 0)
+        else if(RandValue == 1)
         {
             pthread_mutex_lock(&Main_Intersection);
             Intersection.push(id);
@@ -154,7 +151,7 @@ void *STARTSIMULATION(void *arg)
         }
 
         //this will handle cars in the east direction
-        else if(id % 4 + 3 == 0)
+        else if(RandValue == 2)
         {
             pthread_mutex_lock(&Main_Intersection);
             Intersection.push(id);
@@ -183,7 +180,7 @@ void *STARTSIMULATION(void *arg)
             pthread_mutex_lock(&Main_Intersection);
         }
 
-        else if (id % 4 + 4 == 0)
+        else if (RandValue == 3)
         {
             pthread_mutex_lock(&Main_Intersection);
             Intersection.push(id);
@@ -211,5 +208,4 @@ void *STARTSIMULATION(void *arg)
             Intersection.pop();
             pthread_mutex_lock(&Main_Intersection);
         }
-    }
 }
