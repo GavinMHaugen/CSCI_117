@@ -8,7 +8,7 @@ Fall 2015 */
 #include <pthread.h>
 #include <unistd.h>
 #include <queue>
-#inlcude <ctime>
+#include <ctime>
 #include <cmath>
 
 using namespace std;
@@ -16,24 +16,48 @@ using namespace std;
 //These are static values used through the program
 #define TOTAL_CARS 50
 #define SPEED_OF_CAR 5
-
-//The queue I'll be using to Simulate the Intersection traffic
-queue<int> Traffic_Intersection;
-
+#define MIN_DISTANCE_TO_PASS 50
+#define CAR_DEFAULT_DISTANCE 200
+#define NUM_OF_DIRECTIONS 4
 
 //Car class that holds the direction and distance from center
 class Car
 {
     public:
-        Car(int distance, int direction)
+        Car(int d, int dir)
         {
-            d = distance;
-            dir = direction;
+            distance = d;
+            direction = dir;
         }
 
-        int d;
-        int dir;
+        int distance;
+        int direction;
 };
+
+//The queue I'll be using to Simulate the Intersection traffic
+deque<Car> Traffic_Intersection_Waiting;
+deque<Car> Traffic_Intersection_FOQ;
+
+//I'll use this to continually simulate the process in the simulation function
+bool runsim = true;
+
+//used to count the total amount of cars the simulation has processed
+int TotalProcessedTraffic = 0;
+
+//The pthread mutex's ill be using to protect the data
+pthread_mutex_t Traffic_Lock;
+pthread_mutex_t Light_Lock;
+
+//HELPER FUNCTIONS
+
+//This Function checks for another car in the queue that can be processed
+int Search(int direction);
+
+//pthread functions
+void *ProcessTraffic(void *arg);
+void *ProcessDirections(void *arg);
+void *IntersectionStatus(void *arg);
+
 
 int main()
 {
@@ -41,3 +65,72 @@ int main()
 
 }
 
+void *ProcessTraffic(void *arg)
+{
+    sleep(2);
+    while(runsim)
+    {
+        pthread_mutex_lock(&Traffic_Lock);
+
+        if(!Traffic_Intersection_Waiting.empty())
+        {
+            for(int i = 0; i < Traffic_Intersection_Waiting.size(); i++)
+            {
+                if(Traffic_Intersection_Waiting[i].distance <= MIN_DISTANCE_TO_PASS)
+                    {
+                        pthread_mutex_lock(&Light_Lock);
+                        Traffic_Intersection_FOQ.push_back(Traffic_Intersection_Waiting[i]);
+                        Traffic_Intersection_Waiting.erase(Traffic_Intersection_Waiting.begin()+i);
+                        i--;
+                        pthread_mutex_unlock(&Light_Lock);
+                    }
+                else
+                {
+                    Traffic_Intersection_Waiting[i].distance -= SPEED_OF_CAR;
+                }
+            }
+        }
+
+        if(Traffic_Intersection_Waiting.size()+Traffic_Intersection_FOQ.size() < TOTAL_CARS)
+        {
+            Car newcar(CAR_DEFAULT_DISTANCE+(rand() % (CAR_DEFAULT_DISTANCE/3)), rand()%NUM_OF_DIRECTIONS);
+            Traffic_Intersection_Waiting.push_back(newcar);
+        }
+
+        pthread_mutex_unlock(&Traffic_Lock);
+    }
+}
+
+void *ProcessDirections(void *arg)
+{
+    sleep(2);
+    int ThreadCount = (long)arg;
+
+    while(runsim)
+    {
+        pthread_mutex_lock(&Light_Lock);
+        int position = Search(ThreadCount);
+        if(position != -1)
+        {
+            Traffic_Intersection_FOQ.erase(Traffic_Intersection_FOQ.begin() + position);
+            TotalProcessedTraffic++;
+        }
+
+        pthread_mutex_unlock(&Light_Lock);
+    }
+}
+
+int Search(int direction)
+{
+    if(Traffic_Intersection_FOQ.empty())
+    {
+        for(int i = 0; i < Traffic_Intersection_FOQ.size(); i++)
+        {
+            if(Traffic_Intersection_FOQ[i].direction == direction)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
