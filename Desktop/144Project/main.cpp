@@ -45,10 +45,6 @@ void Initialize_Mutex()
     CarIDNumber = 0;
     pthread_mutex_init(&Main_Intersection, NULL);
     pthread_mutex_init(&CarID, NULL);
-    pthread_mutex_init(&North, NULL);
-    pthread_mutex_init(&South, NULL);
-    pthread_mutex_init(&East, NULL);
-    pthread_mutex_init(&West, NULL);
     pthread_attr_init(&THREADATTR);
 
 }
